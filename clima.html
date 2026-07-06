@@ -1,0 +1,514 @@
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AirScope</title>
+<link rel="apple-touch-icon" href="/clima/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AirScope">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+/* ── Tokens ─────────────────────────────────────────────── */
+:root {
+  --bg:         #EFF3F8;
+  --surface:    #FFFFFF;
+  --border:     #C8D8E8;
+  --text:       #1C2B3A;
+  --muted:      #5A7080;
+  --accent:     #1A6FA8;
+  --accent-dim: #D0E6F4;
+  --ok:         #1A7D4A;
+  --warn:       #B86B10;
+  --alert:      #A82818;
+  --ok-bg:      #E6F3EC;
+  --warn-bg:    #FBF0DC;
+  --alert-bg:   #FBEBE8;
+  --card-r:     14px;
+  --gap:        1.25rem;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:         #111C28;
+  --surface:    #192535;
+  --border:     #263748;
+  --text:       #D4E4F0;
+  --muted:      #6080A0;
+  --accent:     #3A9ED8;
+  --accent-dim: #162840;
+  --ok:         #25A05E;
+  --warn:       #D08020;
+  --alert:      #D04030;
+  --ok-bg:      #0C2218;
+  --warn-bg:    #281A08;
+  --alert-bg:   #280E0C;
+}}
+:root[data-theme="light"] {
+  --bg:#EFF3F8;--surface:#FFFFFF;--border:#C8D8E8;--text:#1C2B3A;--muted:#5A7080;
+  --accent:#1A6FA8;--accent-dim:#D0E6F4;
+  --ok:#1A7D4A;--warn:#B86B10;--alert:#A82818;
+  --ok-bg:#E6F3EC;--warn-bg:#FBF0DC;--alert-bg:#FBEBE8;
+}
+:root[data-theme="dark"] {
+  --bg:#111C28;--surface:#192535;--border:#263748;--text:#D4E4F0;--muted:#6080A0;
+  --accent:#3A9ED8;--accent-dim:#162840;
+  --ok:#25A05E;--warn:#D08020;--alert:#D04030;
+  --ok-bg:#0C2218;--warn-bg:#281A08;--alert-bg:#280E0C;
+}
+
+/* ── Base ───────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body {
+  font-family: -apple-system,'Segoe UI',system-ui,sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 2rem 1.25rem 3rem;
+}
+.page { max-width: 900px; margin: 0 auto; }
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.h-title { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+.h-sub {
+  font-size: 0.72rem; color: var(--muted);
+  letter-spacing: 0.07em; text-transform: uppercase; margin-top: 3px;
+}
+.h-right { display: flex; align-items: center; gap: 0.6rem; }
+
+.pill {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 0.3rem 0.75rem;
+}
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted); flex-shrink: 0;
+}
+.dot.live  { background: var(--ok); }
+.dot.error { background: var(--alert); }
+.dot.spin  { animation: blink 1.2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+.btn-r {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.95rem;
+  transition: color .15s, background .15s;
+}
+.btn-r:hover { color: var(--accent); background: var(--accent-dim); }
+.btn-r:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Grid ───────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: var(--gap);
+}
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+@media (min-width:641px) and (max-width:860px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+/* ── Card ───────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-r);
+  padding: 1.25rem 1.25rem 1rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+
+.zone-label {
+  font-size: 0.65rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Readings ───────────────────────────────────────────── */
+.readings { display: flex; gap: 1rem; }
+.reading { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; }
+.r-label {
+  font-size: 0.62rem; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--muted);
+}
+.r-val {
+  font-size: 2.2rem; font-weight: 700;
+  letter-spacing: -0.03em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.r-val .u { font-size: 1rem; font-weight: 500; color: var(--muted); }
+.r-val.hot  { color: var(--warn); }
+.r-val.hum-warn  { color: var(--warn); }
+.r-val.hum-alert { color: var(--alert); }
+
+.r-sub {
+  font-size: 0.67rem; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.r-sub .delta { font-weight: 600; }
+.r-sub .delta.over  { color: var(--warn); }
+.r-sub .delta.under { color: var(--accent); }
+
+/* ── Humidity bar ───────────────────────────────────────── */
+.bar-wrap { display: flex; flex-direction: column; gap: 4px; }
+
+.bar-track {
+  position: relative;
+  height: 5px;
+  background: var(--border);
+  border-radius: 100px;
+  overflow: visible;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: var(--ok);
+  transition: width .6s ease, background-color .4s;
+}
+.bar-fill.warn  { background: var(--warn); }
+.bar-fill.alert { background: var(--alert); }
+
+.thr {
+  position: absolute; top: -4px;
+  width: 1.5px; height: 13px;
+  border-radius: 1px;
+}
+.thr.s58 { left: 58%; background: var(--muted); opacity:.45; }
+.thr.s61 { left: 61%; background: var(--warn);  opacity:.65; }
+.thr.s70 { left: 70%; background: var(--alert); opacity:.65; }
+
+.bar-legend {
+  display: flex; justify-content: space-between;
+  font-size: 0.58rem; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.bar-legend .tl { color: var(--muted); opacity:.6; }
+.bar-legend .tw { color: var(--warn);  opacity:.8; }
+.bar-legend .ta { color: var(--alert); opacity:.8; }
+
+/* ── Outdoor card ───────────────────────────────────────── */
+.outdoor-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.9rem 1.25rem;
+  opacity: 0.85;
+}
+.outdoor-card .zone-label { white-space: nowrap; }
+.outdoor-card .readings { flex: 1; }
+.outdoor-card .r-val { font-size: 1.65rem; }
+.diff-below { color: var(--ok); }
+.diff-above { color: var(--warn); }
+
+/* ── Error ──────────────────────────────────────────────── */
+.err-box {
+  margin-top: 1.25rem;
+  background: var(--alert-bg); border: 1px solid var(--alert);
+  border-radius: 10px; padding: .9rem 1.1rem;
+  font-size: .8rem; color: var(--alert); display: none;
+  line-height: 1.6;
+}
+.err-box.on { display: block; }
+.err-box b { display: block; margin-bottom: .2rem; }
+
+/* ── Footer ─────────────────────────────────────────────── */
+footer {
+  margin-top: 1.75rem; text-align: center;
+  font-size: .7rem; color: var(--muted); line-height: 1.9;
+}
+
+@media (max-width: 480px) {
+  body { padding: 1.25rem 0.9rem 2rem; }
+  .h-title { font-size: 1.15rem; }
+  .card { padding: 1rem; gap: 0.75rem; }
+  .r-val { font-size: 1.85rem; }
+  .bar-legend { gap: 0.15rem; }
+  .bar-legend span:first-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot.spin, .bar-fill { animation: none; transition: none; }
+}
+</style>
+
+<div class="page">
+  <header>
+    <div>
+      <div class="h-title">AirScope</div>
+      <div class="h-sub">Temperatura &amp; Umidità · Live</div>
+    </div>
+    <div class="h-right">
+      <div class="pill" id="boostPill" style="display:none">
+        <span class="dot" id="boostDot"></span>
+        <span id="boostTxt"></span>
+      </div>
+      <div class="pill" id="dehPill" style="display:none">
+        <span class="dot" id="dehDot"></span>
+        <span id="dehTxt"></span>
+      </div>
+      <div class="pill">
+        <span class="dot spin" id="dot"></span>
+        <span id="statusTxt">Connessione…</span>
+      </div>
+      <a href="/clima/storia.html" class="btn-r" title="Storia">📈</a>
+      <button class="btn-r" id="refreshBtn" title="Aggiorna ora" aria-label="Aggiorna">↻</button>
+    </div>
+  </header>
+
+  <div class="grid" id="grid"></div>
+  <div class="card outdoor-card" id="outdoorCard" style="display:none; margin-top:var(--gap)">
+    <div class="zone-label">Esterno · Open-Meteo</div>
+    <div class="readings">
+      <div class="reading">
+        <div class="r-label">Temperatura</div>
+        <div class="r-val" id="outTemp">–<span class="u">°C</span></div>
+      </div>
+      <div class="reading">
+        <div class="r-label">Umidità</div>
+        <div class="r-val" id="outHum">–<span class="u">%</span></div>
+        <div class="r-sub" id="outHumDiff"></div>
+      </div>
+    </div>
+  </div>
+  <div class="err-box" id="errBox"><b id="errTitle"></b><span id="errDetail"></span></div>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+/* ─── Configurazione ──────────────────────────────────── */
+const CFG = {
+  url:      '/clima/data.json',
+  interval: 30_000,   // controlla aggiornamenti ogni 30s
+};
+
+const THR = { stop: 58, start: 61, alarm: 70 };
+
+/* ─── Render ──────────────────────────────────────────── */
+let built = false;
+
+function humCls(h) {
+  return h > THR.alarm ? 'alert' : h > THR.start ? 'warn' : '';
+}
+function fmt(v, d=1) { return isNaN(v) ? '–' : v.toFixed(d); }
+
+function buildCards(zones) {
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  zones.forEach(z => {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.id = 'c' + z.id;
+    c.innerHTML = `
+      <div class="zone-label">${z.name}</div>
+      <div class="readings">
+        <div class="reading">
+          <div class="r-label">Temperatura</div>
+          <div class="r-val" id="t${z.id}">–<span class="u">°C</span></div>
+          <div class="r-sub" id="ts${z.id}"></div>
+        </div>
+        <div class="reading">
+          <div class="r-label">Umidità</div>
+          <div class="r-val" id="h${z.id}">–<span class="u">%</span></div>
+          <div class="r-sub" id="hs${z.id}"></div>
+        </div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-track">
+          <div class="bar-fill" id="b${z.id}" style="width:0"></div>
+          <div class="thr s58" title="STOP ${THR.stop}%"></div>
+          <div class="thr s61" title="START ${THR.start}%"></div>
+          <div class="thr s70" title="Allarme ${THR.alarm}%"></div>
+        </div>
+        <div class="bar-legend">
+          <span>0%</span>
+          <span class="tl">&lt;${THR.stop}% stop</span>
+          <span class="tw">&gt;${THR.start}% start</span>
+          <span class="ta">&gt;${THR.alarm}% allarme</span>
+        </div>
+      </div>`;
+    g.appendChild(c);
+  });
+  built = true;
+}
+
+function updateCards(zones) {
+  if (!built) buildCards(zones);
+  zones.forEach(z => {
+    const tEl  = document.getElementById('t'  + z.id);
+    const tsEl = document.getElementById('ts' + z.id);
+    const hEl  = document.getElementById('h'  + z.id);
+    const hsEl = document.getElementById('hs' + z.id);
+    const bEl  = document.getElementById('b'  + z.id);
+    if (!tEl) return;
+
+    // Temperature + setpoint delta
+    tEl.innerHTML = `${fmt(z.temp)}<span class="u">°C</span>`;
+    tEl.className = 'r-val' + (z.temp > 27 ? ' hot' : '');
+    if (!isNaN(z.setpoint)) {
+      const d = +(z.temp - z.setpoint).toFixed(1);
+      const cls = d > 0 ? 'over' : d < 0 ? 'under' : '';
+      const sign = d > 0 ? '+' : '';
+      tsEl.innerHTML = `Setpoint ${fmt(z.setpoint)}°C · <span class="delta ${cls}">${sign}${d}°</span>`;
+    }
+
+    // Humidity
+    hEl.innerHTML = `${fmt(z.hum, 0)}<span class="u">%</span>`;
+    hEl.className = ('r-val' + (z.hum > THR.alarm ? ' hum-alert' : z.hum > THR.start ? ' hum-warn' : '')).trim();
+
+    // Status hint
+    if (z.hum > THR.alarm) hsEl.textContent = 'Allarme umidità attivo';
+    else if (z.hum > THR.start) hsEl.textContent = 'DEH in funzione';
+    else if (z.hum < THR.stop) hsEl.textContent = 'Sotto soglia stop';
+    else hsEl.textContent = '';
+
+    // Bar
+    bEl.style.width = Math.min(100, Math.max(0, z.hum)) + '%';
+    bEl.className = 'bar-fill ' + humCls(z.hum);
+  });
+}
+
+/* ─── Status / error ──────────────────────────────────── */
+function setStatus(state, txt) {
+  document.getElementById('dot').className = 'dot ' + state;
+  document.getElementById('statusTxt').textContent = txt;
+}
+function showErr(title, detail) {
+  const b = document.getElementById('errBox');
+  document.getElementById('errTitle').textContent  = title;
+  document.getElementById('errDetail').textContent = detail;
+  b.classList.add('on');
+}
+function clearErr() { document.getElementById('errBox').classList.remove('on'); }
+function setPill(id, obj, label) {
+  const pill = document.getElementById(id + 'Pill');
+  if (!obj) { pill.style.display = 'none'; return; }
+  pill.style.display = 'flex';
+  document.getElementById(id + 'Dot').className = 'dot' + (obj.on ? ' live' : ' error');
+  const since = obj.since ? ' · ' + new Date(obj.since * 1000).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}) : '';
+  document.getElementById(id + 'Txt').textContent = label + ' ' + (obj.on ? 'ON' : 'OFF') + since;
+}
+function setDeh(deh)     { setPill('deh',   deh,   'DEH'); }
+function setBoost(boost) { setPill('boost', boost, '❄️'); }
+
+function setOutdoor(outdoor, zones) {
+  const card = document.getElementById('outdoorCard');
+  if (!outdoor) { card.style.display = 'none'; return; }
+  card.style.display = 'flex';
+  document.getElementById('outTemp').innerHTML =
+    `${fmt(outdoor.temp)}<span class="u">°C</span>`;
+  document.getElementById('outHum').innerHTML =
+    `${outdoor.hum}<span class="u">%</span>`;
+  // Differenza media indoor vs outdoor
+  if (zones?.length) {
+    const avgIn = zones.reduce((s, z) => s + z.hum, 0) / zones.length;
+    const diff  = Math.round(outdoor.hum - avgIn);  // negativo = fuori più secco
+    const sign  = diff > 0 ? '+' : '';
+    const cls   = diff > 0 ? 'diff-above' : 'diff-below';
+    const label = diff > 0 ? 'fuori più umido' : 'fuori più secco';
+    document.getElementById('outHumDiff').innerHTML =
+      `<span class="${cls}">${sign}${diff}% (${label})</span>`;
+  }
+}
+
+function setFoot(ts) {
+  const t = new Date(ts * 1000).toLocaleTimeString('it-IT');
+  document.getElementById('foot').textContent =
+    `Dati delle ${t} · aggiornamento ogni 2 min`;
+}
+
+/* ─── Dati ────────────────────────────────────────────── */
+const CACHE_KEY = 'clima_data';
+let timer  = null;
+let lastTs = null;
+
+async function fetchJson() {
+  const res = await fetch(CFG.url + '?t=' + Date.now(), {
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const d = await res.json();
+  if (!d.zones?.length) throw new Error('Nessuna zona');
+  return d;
+}
+
+function renderData(data) {
+  updateCards(data.zones);
+  setDeh(data.deh);
+  setBoost(data.boost);
+  setOutdoor(data.outdoor, data.zones);
+  setFoot(data.ts);
+  lastTs = data.ts;
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
+}
+
+/* Caricamento iniziale: mostra subito la cache locale, poi aggiorna da data.json */
+async function init() {
+  let hasCached = false;
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if (cached?.zones?.length) {
+      renderData(cached);
+      setStatus('live', 'Dati in cache');
+      hasCached = true;
+    }
+  } catch {}
+
+  if (!hasCached) setStatus('spin', 'Caricamento…');
+
+  try {
+    const data = await fetchJson();
+    renderData(data);
+    clearErr();
+    setStatus('live', 'Live');
+  } catch (e) {
+    if (!hasCached) {
+      setStatus('error', 'Errore');
+      showErr('Dati non disponibili', e.message);
+    }
+    /* altrimenti: mantieni i dati dalla cache, nessun errore visibile */
+  }
+}
+
+/* Polling periodico: aggiorna silenziosamente, nessun errore se fallisce */
+async function poll() {
+  try {
+    const data = await fetchJson();
+    if (data.ts !== lastTs) renderData(data);
+    setStatus('live', 'Live');
+  } catch {
+    /* mantieni i dati correnti, nessun indicatore di errore */
+  }
+}
+
+function schedule() {
+  clearTimeout(timer);
+  timer = setTimeout(() => poll().then(schedule), CFG.interval);
+}
+
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+  clearTimeout(timer);
+  setStatus('spin', 'Aggiornamento…');
+  try {
+    await fetch('/cgi-bin/refresh', { method: 'POST', signal: AbortSignal.timeout(25000) });
+  } catch {}
+  try {
+    const data = await fetchJson();
+    renderData(data);
+    clearErr();
+    setStatus('live', 'Live');
+  } catch (e) {
+    setStatus('error', 'Errore');
+    showErr('Dati non disponibili', e.message);
+  }
+  schedule();
+});
+
+init().then(schedule);
+</script>

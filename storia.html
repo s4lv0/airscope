@@ -1,0 +1,299 @@
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AirScope · Storia</title>
+<link rel="apple-touch-icon" href="/clima/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AirScope">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root {
+  --bg:#EFF3F8;--surface:#FFFFFF;--border:#C8D8E8;--text:#1C2B3A;--muted:#5A7080;
+  --accent:#1A6FA8;--accent-dim:#D0E6F4;--ok:#1A7D4A;--warn:#B86B10;--alert:#A82818;
+  --ok-bg:#E6F3EC;--warn-bg:#FBF0DC;--alert-bg:#FBEBE8;
+  --card-r:14px;--gap:1.25rem;
+  --z1:#1A6FA8;--z2:#1A7D4A;--z3:#B86B10;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#111C28;--surface:#192535;--border:#263748;--text:#D4E4F0;--muted:#6080A0;
+  --accent:#3A9ED8;--accent-dim:#162840;--ok:#25A05E;--warn:#D08020;--alert:#D04030;
+  --ok-bg:#0C2218;--warn-bg:#281A08;--alert-bg:#280E0C;
+  --z1:#3A9ED8;--z2:#25A05E;--z3:#D08020;
+}}
+:root[data-theme="light"]{--bg:#EFF3F8;--surface:#FFFFFF;--border:#C8D8E8;--text:#1C2B3A;--muted:#5A7080;--accent:#1A6FA8;--accent-dim:#D0E6F4;--ok:#1A7D4A;--warn:#B86B10;--alert:#A82818;--ok-bg:#E6F3EC;--warn-bg:#FBF0DC;--alert-bg:#FBEBE8;--z1:#1A6FA8;--z2:#1A7D4A;--z3:#B86B10;}
+:root[data-theme="dark"]{--bg:#111C28;--surface:#192535;--border:#263748;--text:#D4E4F0;--muted:#6080A0;--accent:#3A9ED8;--accent-dim:#162840;--ok:#25A05E;--warn:#D08020;--alert:#D04030;--ok-bg:#0C2218;--warn-bg:#281A08;--alert-bg:#280E0C;--z1:#3A9ED8;--z2:#25A05E;--z3:#D08020;}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem 1.25rem 3rem;}
+.page{max-width:960px;margin:0 auto;}
+
+header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem;}
+.h-title{font-size:1.35rem;font-weight:700;letter-spacing:-.02em;}
+.h-sub{font-size:.72rem;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-top:3px;}
+.h-right{display:flex;align-items:center;gap:.6rem;}
+.seg{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.seg-btn{border:none;background:transparent;color:var(--muted);font-size:.78rem;font-weight:600;padding:.35rem .85rem;cursor:pointer;transition:background .15s,color .15s;}
+.seg-btn.active{background:var(--accent);color:#fff;}
+.btn-r{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:1rem;text-decoration:none;transition:color .15s,background .15s;}
+.btn-r:hover{color:var(--accent);background:var(--accent-dim);}
+
+/* Records */
+.records{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin-bottom:var(--gap);}
+@media(max-width:600px){.records{grid-template-columns:repeat(2,1fr);}}
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--card-r);padding:1rem;}
+.rec-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem;}
+.rec-val{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;}
+.rec-u{font-size:.85rem;font-weight:500;opacity:.55;}
+.rec-sub{font-size:.65rem;color:var(--muted);margin-top:4px;}
+
+/* Heatmap card */
+.hm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--card-r);padding:1.25rem 1.25rem .75rem;margin-bottom:var(--gap);}
+.hm-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.9rem;}
+.hm-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.hm-table{border-collapse:separate;border-spacing:3px;white-space:nowrap;}
+.hm-zone-hdr{position:sticky;left:0;background:var(--surface);z-index:2;min-width:88px;padding:.3rem .5rem;}
+.hm-col-hdr{font-size:.62rem;font-weight:600;color:var(--muted);padding:.3rem .4rem;text-align:center;min-width:46px;letter-spacing:.04em;}
+.hm-zone-cell{position:sticky;left:0;background:var(--surface);z-index:1;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.55rem .5rem;white-space:nowrap;}
+.hm-cell{text-align:center;font-size:.8rem;font-weight:700;padding:.55rem .4rem;border-radius:7px;min-width:46px;font-variant-numeric:tabular-nums;cursor:default;transition:opacity .1s;}
+.hm-cell:hover{opacity:.8;}
+
+/* Legend strip */
+.hm-legend{display:flex;align-items:center;gap:.5rem;margin-top:.75rem;flex-wrap:wrap;font-size:.65rem;color:var(--muted);}
+.hm-leg-swatch{display:inline-block;width:18px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* DEH sessions */
+.deh-list{display:flex;flex-direction:column;gap:.5rem;}
+.deh-row{display:flex;align-items:center;gap:.75rem;font-size:.82rem;font-variant-numeric:tabular-nums;}
+.deh-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.deh-dot.on{background:var(--ok);}
+.deh-dot.still{background:var(--warn);}
+.deh-times{color:var(--text);font-weight:600;}
+.deh-dur{color:var(--muted);font-size:.75rem;}
+.deh-bar-wrap{margin-top:.75rem;}
+.deh-bar-track{position:relative;height:18px;background:var(--bg);border-radius:6px;overflow:hidden;border:1px solid var(--border);}
+.deh-bar-seg{position:absolute;top:0;height:100%;border-radius:0;}
+.deh-bar-seg.on{background:var(--ok);opacity:.7;}
+.deh-bar-seg.still{background:var(--warn);opacity:.6;}
+.deh-bar-labels{display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted);margin-top:3px;}
+
+.no-data{color:var(--muted);font-size:.85rem;padding:2rem;text-align:center;display:block;}
+.hm-zone-cell.outdoor{color:var(--muted);font-style:italic;border-top:1px solid var(--border);}
+.hm-cell.outdoor{opacity:.75;}
+</style>
+
+<div class="page">
+  <header>
+    <div>
+      <div class="h-title">AirScope · Storia</div>
+      <div class="h-sub">Storico temperature &amp; umidità</div>
+    </div>
+    <div class="h-right">
+      <div class="seg" id="seg">
+        <button class="seg-btn active" data-view="day">24h</button>
+        <button class="seg-btn" data-view="week">7 giorni</button>
+        <button class="seg-btn" data-view="month">30 giorni</button>
+      </div>
+      <a href="/clima/clima.html" class="btn-r" title="Live">⌂</a>
+    </div>
+  </header>
+
+  <div class="records" id="records"></div>
+
+  <div class="hm-card">
+    <div class="hm-title">Umidità relativa (%)</div>
+    <div class="hm-scroll" id="humHM"></div>
+    <div class="hm-legend">
+      <span class="hm-leg-swatch" style="background:var(--ok-bg);border:1px solid var(--ok)"></span>&lt;58% ok
+      <span class="hm-leg-swatch" style="background:var(--warn-bg);border:1px solid var(--warn);margin-left:.4rem"></span>58–61%
+      <span class="hm-leg-swatch" style="background:#FBE8D0;border:1px solid var(--warn);margin-left:.4rem"></span>61–70%
+      <span class="hm-leg-swatch" style="background:var(--alert-bg);border:1px solid var(--alert);margin-left:.4rem"></span>&gt;70% allarme
+    </div>
+  </div>
+
+  <div class="hm-card">
+    <div class="hm-title">Temperatura (°C)</div>
+    <div class="hm-scroll" id="tempHM"></div>
+    <div class="hm-legend">
+      <span class="hm-leg-swatch" style="background:var(--ok-bg);border:1px solid var(--ok)"></span>&le;25°
+      <span class="hm-leg-swatch" style="background:var(--warn-bg);border:1px solid var(--warn);margin-left:.4rem"></span>25–28°
+      <span class="hm-leg-swatch" style="background:var(--alert-bg);border:1px solid var(--alert);margin-left:.4rem"></span>&gt;28°
+    </div>
+  </div>
+
+  <div class="hm-card" id="dehCard">
+    <div class="hm-title">DEH — Deumidificatore</div>
+    <div id="dehContent"><span class="no-data">Caricamento…</span></div>
+  </div>
+</div>
+
+<script>
+const ZONES = [
+  {id:1, name:'Soggiorno', cls:'z1'},
+  {id:2, name:'Camera',    cls:'z2'},
+  {id:3, name:'Cameretta', cls:'z3'},
+];
+const THR = {stop:58, start:61, alarm:70};
+
+function humStyle(v) {
+  if (v == null) return 'background:transparent;color:var(--muted)';
+  if (v > THR.alarm)  return 'background:var(--alert-bg);color:var(--alert)';
+  if (v > THR.start)  return 'background:#FBE8D0;color:var(--warn)';
+  if (v >= THR.stop)  return 'background:var(--warn-bg);color:var(--warn)';
+  return 'background:var(--ok-bg);color:var(--ok)';
+}
+
+function tempStyle(v) {
+  if (v == null) return 'background:transparent;color:var(--muted)';
+  if (v > 28) return 'background:var(--alert-bg);color:var(--alert)';
+  if (v > 25) return 'background:var(--warn-bg);color:var(--warn)';
+  return 'background:var(--ok-bg);color:var(--ok)';
+}
+
+function buildHeatmap(points, getVal, styleFn, outdoor, getOutVal) {
+  if (!points.length) return '<span class="no-data">Nessun dato</span>';
+  const labels = points.map(p => p.label.length === 10 ? p.label.slice(5) : p.label);
+  let h = '<table class="hm-table"><thead><tr>';
+  h += '<th class="hm-zone-hdr"></th>';
+  labels.forEach(l => { h += `<th class="hm-col-hdr">${l}</th>`; });
+  h += '</tr></thead><tbody>';
+  ZONES.forEach(z => {
+    h += `<tr><td class="hm-zone-cell ${z.cls}">${z.name}</td>`;
+    points.forEach(p => {
+      const zd = p.zones.find(z2 => z2.id === z.id);
+      const v  = zd ? getVal(zd) : null;
+      const display = v != null ? (Number.isInteger(v) ? v : v.toFixed(1)) : '–';
+      h += `<td class="hm-cell" style="${styleFn(v)}">${display}</td>`;
+    });
+    h += '</tr>';
+  });
+  if (outdoor && getOutVal) {
+    h += '<tr><td class="hm-zone-cell outdoor">Esterno</td>';
+    points.forEach(p => {
+      const od = outdoor[p.label];
+      const v  = od ? getOutVal(od) : null;
+      const display = v != null ? (Number.isInteger(v) ? v : v.toFixed(1)) : '–';
+      h += `<td class="hm-cell outdoor" style="${styleFn(v)}">${display}</td>`;
+    });
+    h += '</tr>';
+  }
+  h += '</tbody></table>';
+  return h;
+}
+
+function renderRecords(records) {
+  if (!records || !Object.keys(records).length) return;
+  let mxH={v:-Infinity,n:''}, mnH={v:Infinity,n:''}, mxT={v:-Infinity,n:''}, mnT={v:Infinity,n:''};
+  Object.values(records).forEach(r => {
+    if (r.max_hum  > mxH.v) mxH = {v: r.max_hum,  n: r.name};
+    if (r.min_hum  < mnH.v) mnH = {v: r.min_hum,  n: r.name};
+    if (r.max_temp > mxT.v) mxT = {v: r.max_temp, n: r.name};
+    if (r.min_temp < mnT.v) mnT = {v: r.min_temp, n: r.name};
+  });
+  const card = (lbl, val, unit, zone) =>
+    `<div class="rec-card"><div class="rec-label">${lbl}</div><div class="rec-val">${val}<span class="rec-u"> ${unit}</span></div><div class="rec-sub">${zone}</div></div>`;
+  document.getElementById('records').innerHTML =
+    card('Umidità max', mxH.v, '%', mxH.n) +
+    card('Umidità min', mnH.v, '%', mnH.n) +
+    card('Temp. max',   mxT.v, '°C', mxT.n) +
+    card('Temp. min',   mnT.v, '°C', mnT.n);
+}
+
+function fmt(ts) {
+  const d = new Date(ts * 1000);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fmtTime(ts) {
+  const d = new Date(ts * 1000);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function dur(on, off) {
+  const s = (off ? off : Math.floor(Date.now()/1000)) - on;
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return h ? `${h}h ${m}m` : `${m}m`;
+}
+
+function renderDeh(sessions, view) {
+  const el = document.getElementById('dehContent');
+  if (!sessions || !sessions.length) {
+    el.innerHTML = '<span class="no-data">Nessuna sessione nel periodo</span>';
+    return;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+
+  // Barra timeline (solo per vista giorno)
+  let barHtml = '';
+  if (view === 'day') {
+    const winStart = now - 86400;
+    const winLen   = 86400;
+    let segs = '';
+    sessions.forEach(s => {
+      const l = Math.max(s.on, winStart);
+      const r = s.off ? Math.min(s.off, now) : now;
+      const left  = ((l - winStart) / winLen * 100).toFixed(2);
+      const width = ((r - l)        / winLen * 100).toFixed(2);
+      const cls   = s.off ? 'on' : 'still';
+      segs += `<div class="deh-bar-seg ${cls}" style="left:${left}%;width:${width}%"></div>`;
+    });
+    barHtml = `
+      <div class="deh-bar-wrap">
+        <div class="deh-bar-track">${segs}</div>
+        <div class="deh-bar-labels"><span>${fmtTime(now - 86400)}</span><span>ora</span></div>
+      </div>`;
+  }
+
+  // Lista sessioni
+  let listHtml = '<div class="deh-list">';
+  sessions.forEach(s => {
+    const still = !s.off;
+    const cls   = still ? 'still' : 'on';
+    const label = still
+      ? `${fmt(s.on)} → in corso`
+      : `${fmt(s.on)} &rarr; ${fmt(s.off)}`;
+    listHtml += `
+      <div class="deh-row">
+        <span class="deh-dot ${cls}"></span>
+        <span class="deh-times">${label}</span>
+        <span class="deh-dur">${dur(s.on, s.off)}</span>
+      </div>`;
+  });
+  listHtml += '</div>';
+
+  el.innerHTML = barHtml + listHtml;
+}
+
+let currentView = 'day';
+
+async function load(view) {
+  currentView = view;
+  document.getElementById('humHM').innerHTML  = '<span class="no-data">Caricamento…</span>';
+  document.getElementById('tempHM').innerHTML = '';
+  document.getElementById('dehContent').innerHTML = '<span class="no-data">Caricamento…</span>';
+  try {
+    const res  = await fetch(`/cgi-bin/storia?view=${view}`, {signal: AbortSignal.timeout(10000)});
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    renderRecords(data.records);
+    const out = data.outdoor || {};
+    document.getElementById('humHM').innerHTML  = buildHeatmap(data.points, z => z.avg_hum,  humStyle,  out, o => o.avg_hum);
+    document.getElementById('tempHM').innerHTML = buildHeatmap(data.points, z => z.avg_temp, tempStyle, out, o => o.avg_temp);
+    renderDeh(data.deh_sessions, view);
+  } catch(e) {
+    document.getElementById('humHM').innerHTML = `<span class="no-data">Errore: ${e.message}</span>`;
+    document.getElementById('dehContent').innerHTML = `<span class="no-data">Errore: ${e.message}</span>`;
+  }
+}
+
+document.getElementById('seg').addEventListener('click', e => {
+  const btn = e.target.closest('.seg-btn');
+  if (!btn) return;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  load(btn.dataset.view);
+});
+
+load('day');
+</script>
